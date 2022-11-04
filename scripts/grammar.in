@@ -1,0 +1,7 @@
+#S E
+#N E T F
+#T num + * ( )
+#P
+@ E -> E+T # T
+@ T -> T*F # F
+@ F -> (E) # num
