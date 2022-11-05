@@ -110,7 +110,7 @@ void Grammar::GrammarLL1::_analyze()
 {
     std::cout << BOLDWHITE << "[input]" << RESET << _outputStream() << std::endl;
     bool res = true;
-    while(_state_stack.size() != 1)
+    while(_state_stack.size() != 0)
     {
         /* terminal */
         /* message output */

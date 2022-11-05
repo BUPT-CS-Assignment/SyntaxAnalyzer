@@ -463,20 +463,6 @@ void Grammar::GrammarLR1::printTable()
 
 Symbol& Grammar::GrammarLR1::_nextToken()
 {
-    // if(_stream == nullptr || _stream_pos >= (int)_stream->size())
-    //     _cur_token = _next_token = ENDING;
-    // else
-    // {
-    //     _cur_token = (*_stream)[++_stream_pos];
-    //     if(_stream_pos >= (int)_stream->size())
-    //         _next_token = ENDING;
-    //     else if((*_stream)[_stream_pos].content() == ";")
-    //         _next_token = ENDING;
-    //     else
-    //         _next_token = (*_stream)[_stream_pos];
-    // }
-    // return _cur_token;
-
     if(_stream == nullptr || _stream_pos >= (int)_stream->size())
         _cur_token = ENDING;
     else
