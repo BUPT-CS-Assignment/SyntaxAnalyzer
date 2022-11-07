@@ -1,21 +1,22 @@
 #include "../include/lexer/scanner.hpp"
 
 std::vector<Symbol> Scanner::tokenStream(){
-    std::vector<Symbol> symbols;
+    std::vector<Symbol> symbols;    // 记号流
     bool error_flag = false;
     Symbol s(this);
+    /* 生成记号流 */
     while((++s).attr() != Symbol::Type::END){
-        s.setContent(s.syntaxSign());
+        s.setContent(s.syntaxSign());               // 设置显示内容
         if(s.attr() == Symbol::Type::ERROR)
             error_flag = true;
-        else if(s.attr() != Symbol::Type::COMMENT)
+        else if(s.attr() != Symbol::Type::COMMENT)  // 跳过注释
             symbols.emplace_back(s);
     }
-    if(error_flag){
+    if(error_flag){     
         symbols.clear();
-        LOG_INFO("invalid input");
+        LOG_INFO("invalid input");  // 错误检测  
     }
-    symbols.emplace_back(Symbol("end",Symbol::Type::END));
+    symbols.emplace_back(Symbol("end",Symbol::Type::END));  // 插入结束记号
     return symbols;
 }
 
@@ -24,13 +25,13 @@ void Scanner::setReport(bool flag){
 }
 
 void Scanner::input(const std::string in_str){
-    _ofs.open(__tmp_filename,std::ios::out|std::ios::trunc);
+    _ofs.open(__tmp_filename,std::ios::out|std::ios::trunc);    // 写入tmp文件
     if(!_ofs.is_open())
         EXIT_ERROR("system error");
     _ofs << in_str;
     _ofs.close();
     close();    
-    open(__tmp_filename.c_str());
+    open(__tmp_filename.c_str());   // 调用open读取文件流
 }
 
 void Scanner::terminate(){

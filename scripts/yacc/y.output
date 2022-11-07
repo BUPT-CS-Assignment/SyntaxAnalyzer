@@ -1,0 +1,225 @@
+Grammar
+
+    0 $accept: S $end
+
+    1 S: E LINE
+
+    2 E: E ADD T
+    3  | E SUB T
+    4  | T
+
+    5 T: T MUL F
+    6  | T DIV F
+    7  | F
+
+    8 F: LBK E RBK
+    9  | digit
+
+
+Terminals, with rules where they appear
+
+$end (0) 0
+error (256)
+digit (258) 9
+ADD (259) 2
+SUB (260) 3
+MUL (261) 5
+DIV (262) 6
+LBK (263) 8
+RBK (264) 8
+LINE (265) 1
+
+
+Nonterminals, with rules where they appear
+
+$accept (11)
+    on left: 0
+S (12)
+    on left: 1, on right: 0
+E (13)
+    on left: 2 3 4, on right: 1 2 3 8
+T (14)
+    on left: 5 6 7, on right: 2 3 4 5 6
+F (15)
+    on left: 8 9, on right: 5 6 7
+
+
+state 0
+
+    0 $accept: . S $end
+
+    digit  shift, and go to state 1
+    LBK    shift, and go to state 2
+
+    S  go to state 3
+    E  go to state 4
+    T  go to state 5
+    F  go to state 6
+
+
+state 1
+
+    9 F: digit .
+
+    $default  reduce using rule 9 (F)
+
+
+state 2
+
+    8 F: LBK . E RBK
+
+    digit  shift, and go to state 1
+    LBK    shift, and go to state 2
+
+    E  go to state 7
+    T  go to state 5
+    F  go to state 6
+
+
+state 3
+
+    0 $accept: S . $end
+
+    $end  shift, and go to state 8
+
+
+state 4
+
+    1 S: E . LINE
+    2 E: E . ADD T
+    3  | E . SUB T
+
+    ADD   shift, and go to state 9
+    SUB   shift, and go to state 10
+    LINE  shift, and go to state 11
+
+
+state 5
+
+    4 E: T .
+    5 T: T . MUL F
+    6  | T . DIV F
+
+    MUL  shift, and go to state 12
+    DIV  shift, and go to state 13
+
+    $default  reduce using rule 4 (E)
+
+
+state 6
+
+    7 T: F .
+
+    $default  reduce using rule 7 (T)
+
+
+state 7
+
+    2 E: E . ADD T
+    3  | E . SUB T
+    8 F: LBK E . RBK
+
+    ADD  shift, and go to state 9
+    SUB  shift, and go to state 10
+    RBK  shift, and go to state 14
+
+
+state 8
+
+    0 $accept: S $end .
+
+    $default  accept
+
+
+state 9
+
+    2 E: E ADD . T
+
+    digit  shift, and go to state 1
+    LBK    shift, and go to state 2
+
+    T  go to state 15
+    F  go to state 6
+
+
+state 10
+
+    3 E: E SUB . T
+
+    digit  shift, and go to state 1
+    LBK    shift, and go to state 2
+
+    T  go to state 16
+    F  go to state 6
+
+
+state 11
+
+    1 S: E LINE .
+
+    $default  reduce using rule 1 (S)
+
+
+state 12
+
+    5 T: T MUL . F
+
+    digit  shift, and go to state 1
+    LBK    shift, and go to state 2
+
+    F  go to state 17
+
+
+state 13
+
+    6 T: T DIV . F
+
+    digit  shift, and go to state 1
+    LBK    shift, and go to state 2
+
+    F  go to state 18
+
+
+state 14
+
+    8 F: LBK E RBK .
+
+    $default  reduce using rule 8 (F)
+
+
+state 15
+
+    2 E: E ADD T .
+    5 T: T . MUL F
+    6  | T . DIV F
+
+    MUL  shift, and go to state 12
+    DIV  shift, and go to state 13
+
+    $default  reduce using rule 2 (E)
+
+
+state 16
+
+    3 E: E SUB T .
+    5 T: T . MUL F
+    6  | T . DIV F
+
+    MUL  shift, and go to state 12
+    DIV  shift, and go to state 13
+
+    $default  reduce using rule 3 (E)
+
+
+state 17
+
+    5 T: T MUL F .
+
+    $default  reduce using rule 5 (T)
+
+
+state 18
+
+    6 T: T DIV F .
+
+    $default  reduce using rule 6 (T)

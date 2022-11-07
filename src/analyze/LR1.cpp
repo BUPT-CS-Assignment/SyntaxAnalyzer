@@ -94,25 +94,21 @@ void Grammar::GrammarLR1::Item::closure()
     while(run_flag)
     {
         run_flag = false;
-        for(int i = 0; i < _productions.size(); i++)
+        for(int i = 0; i < _productions.size(); i++)    // 对所有产生式
         {
             Production* p = &_productions[i];
             if((*p)[0].state == Production::To::State::REDUCTION_EXPECTING)
-            {
+            {/* 检测待约项目 */
                 Symbol s = (*p)[0].getDotSymbol();
-                /* Add new State */
+                /* 加入对应产生式 */
                 for(auto& t : (*(_LR1->_G))[s.content()].to)
                 {
-
                     Production temp(s.content());
                     temp.insert(t);
-
                     /* compute ahead symbol */
-                    _computeAhead(temp, _productions[i]);
-
+                    _computeAhead(temp, _productions[i]);   // 计算向前看符号集合
                     /* try insert */
-                    int res = insert(temp);
-
+                    int res = insert(temp); // 插入新产生式
                     if(res == -1)
                         EXIT_ERROR("closure compute error.")
                     else if(res == 1)
@@ -157,10 +153,10 @@ void Grammar::GrammarLR1::Item::clear()
     _productions.clear();
 }
 
-
+/* 活前缀读取 */
 void Grammar::GrammarLR1::Item::next()
 {
-    /* find all REDUCTION_EXPECTING */
+    /* find all REDUCTION_EXPECTING and SHIFT */
     for(auto& it : _productions)
     {
         if(it[0].state != Production::To::State::REDUCTION)
@@ -316,40 +312,40 @@ bool Grammar::GrammarLR1::initTable()
         it.resize(_G->N.size(), -1);
 
     /* generate action & goto table */
-    for(int i = 0; i < _colletion.size(); i++)
+    for(int i = 0; i < _colletion.size(); i++)      // 对每一个状态
     {
         Item* item = _colletion[i];
         // compute SHIFT & GOTO
-        for(int j = 0; j < item->_nextRead.size(); j++)
+        for(int j = 0; j < item->_nextRead.size(); j++) // 对每一个识别的活前缀
         {
             Symbol* s = &item->_nextRead[j];
             int to_num = item->_nextTo[j];
             // not-terminal symbol, add to goto table
-            if(s->attr() == Symbol::Type::NOT_TERMINAL)
+            if(s->attr() == Symbol::Type::NOT_TERMINAL) // 非终结符
             {
                 int pos = (*_G)(*s);
-                goto_table[i][pos] = to_num;
+                goto_table[i][pos] = to_num;    // 填写goto
             }
             else
             {
-                // teminal symbol, add to action table
+                // 终结符
                 int pos = _G->_findT(s->content());
-                action_table[i][pos].first = ActionType::SHIFT;
+                action_table[i][pos].first = ActionType::SHIFT; // 填写Sx到action
                 action_table[i][pos].second = to_num;
             }
         }
 
         // compute reduction
-        for(auto& p : item->_productions)
+        for(auto& p : item->_productions)   // 遍历每一个产生式
         {
-            if(p[0].state == Production::To::State::REDUCTION)
+            if(p[0].state == Production::To::State::REDUCTION)  // 找到所有归约项目
             {
                 int p_num = _findProduction(p);
                 for(auto& str : p[0].ahead)
                 {
                     int pos = str == ENDING_STR ? _G->T.size() : _G->_findT(str);
 
-                    // check conflict
+                    // 冲突
                     if(action_table[i][pos].first != ActionType::ERROR)
                     {
                         action_table.clear();
@@ -362,7 +358,7 @@ bool Grammar::GrammarLR1::initTable()
                     else
                     {
                         action_table[i][pos].first = ActionType::REDUCTION;
-                        action_table[i][pos].second = p_num;
+                        action_table[i][pos].second = p_num;    // 填写Rx到action
                     }
                 }
             }

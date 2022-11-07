@@ -14,7 +14,7 @@ Grammar::GrammarLL1::GrammarLL1(Grammar* g)
 
 bool Grammar::GrammarLL1::initTable()
 {
-    for(int p = 0; p < G->N.size(); p++)
+    for(int p = 0; p < G->N.size(); p++)    // 对每个非终结符
     {
         Production* prod = &(*G)[p];
         for(int to_serial = 0; to_serial < prod->to.size(); to_serial++)
@@ -24,10 +24,10 @@ bool Grammar::GrammarLL1::initTable()
             std::set<std::string> first = G->findFirst(prod->to[to_serial].elements);
             for(auto fi : first)
             {
-                if(fi == EPSILON_STR)
+                if(fi == EPSILON_STR)  // FIRST集合中含有epsilon
                 {
-                    for(auto fo : G->FOLLOW[p])
-                    {
+                    for(auto fo : G->FOLLOW[p]) // 对于该非终结符的每个FOLLOW符号
+                    {/* 定位终结符, 将该非终结符所推出的产生式的序号填入分析表 */
                         if(fo == ENDING_STR)
                         {
                             int* num = &table[p][G->T.size()];
@@ -137,13 +137,18 @@ void Grammar::GrammarLL1::_analyze()
             {
                 _state_stack.pop_back();
                 _nextToken();
+                std::cout << "\n";
             }
             else
             {
                 _error();
                 res = false;
+                if(_cur_token.attr() == Symbol::Type::END){
+                    break;
+                }else{
+                    _nextToken();
+                }
             }
-            std::cout << "\n";
         }
         else
         {
@@ -165,7 +170,8 @@ void Grammar::GrammarLL1::_analyze()
                 {
                     /* synch */
                     _state_stack.pop_back();
-                    _error();
+                    std::cout << BOLDMAGENTA << "SYNCH" << RESET << std::endl;
+                    //_error();
                     res = false;
                 }
                 else if(to_num == -1)

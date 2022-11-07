@@ -79,6 +79,10 @@ void Grammar::init(const char* file_name)
             while(s.attr() != Symbol::Type::END && s.content() != PRODUCTION_DIVIDE && s.content() != PRODUCTION_BEGIN)
             {
                 s.syntaxReset();
+                if(_findT(s.content()) != -1){
+                    if(s.attr() == Symbol::Type::NOT_TERMINAL)
+                        s.setAttr(Symbol::Type::IDENTIFIER);
+                }
                 temp_to.emplace_back(s);
                 ++s;
             }

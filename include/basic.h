@@ -9,8 +9,9 @@
 #include <vector>
 #include <set>
 
-#define MODE_LL1 0
-#define MODE_LR1 1
+#define MODE_LL1    0
+#define MODE_LR1    1
+#define MODE_ARITH  2
 
 #define EXIT_ERROR(X) {std::cout << "[error] " << X << std::endl;exit(-1);}
 #define LOG_INFO(X) {std::cout << "[info] "<< X << std::endl;}
@@ -43,20 +44,22 @@ static void readArgs(int argc, char** argv, char** path, int* mode){
         {
             if(n == argc - 1)
                 EXIT_ERROR("empty filepath.")
-                *path = argv[n + 1];
+            *path = argv[n + 1];
             n++;
         }
         else if(strcmp(argv[n], "-m") == 0)
         {
             if(n == argc - 1)
                 EXIT_ERROR("empty mode type.")
-                if(strcmp(argv[n + 1], "LL1") == 0)
-                    *mode = MODE_LL1;
-                else if(strcmp(argv[n + 1], "LR1") == 0)
-                    *mode = MODE_LR1;
-                else
-                    EXIT_ERROR("undefined mode.")
-                    n++;
+            if(strcmp(argv[n + 1], "LL1") == 0)
+                *mode = MODE_LL1;
+            else if(strcmp(argv[n + 1], "LR1") == 0)
+                *mode = MODE_LR1;
+            else if(strcmp(argv[n + 1], "Arith") == 0)
+                *mode = MODE_ARITH;
+            else
+                EXIT_ERROR("undefined mode.")
+            n++;
         }
         else
             EXIT_ERROR("undefine argument " << argv[n] << ".");

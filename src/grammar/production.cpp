@@ -68,19 +68,20 @@ std::set<Symbol> Grammar::Production::existLeftCommonFactor(){
     return ret;
 }
 
+/* 消除直接左递归 */
 Grammar::Production Grammar::Production::eliminateLeftRecursion(){
-    Production new_p(from + "'");
-    for(auto it = to.begin();it != to.end();){
+    Production new_p(from + "'");                   // 定义新产生式
+    for(auto it = to.begin();it != to.end();){      // 对所有产生式右部
         if((*it)[0].content() == from){
-            std::vector<Symbol> s = (*it).elements;
-            it = to.erase(it);
+            std::vector<Symbol> s = (*it).elements; // 复制该条产生式右部内容
+            it = to.erase(it);      // 从原产生式重删除该条产生式右部
             /* add new_satate -> xx */
-            s.erase(s.begin());
-            s.emplace_back(Symbol(new_p.from));
-            new_p.insert(s);
+            s.erase(s.begin());     // 删除左部直接左递归符号
+            s.emplace_back(Symbol(new_p.from)); // 在最后插入新符号
+            new_p.insert(s);        // 掺入新的产生式
             new_p.insert({Symbol(EPSILON_STR,Symbol::Type::EPSILON)});
         }else{
-            (*it).append(new_p.from);
+            (*it).append(new_p.from);   // 修改不含直接左递归的产生式右部
             it++;
         }
     }

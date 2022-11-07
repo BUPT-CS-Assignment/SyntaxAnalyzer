@@ -1,7 +1,7 @@
 #S E
 #N E T F
-#T num + * ( )
+#T num + - * / ( )
 #P
-@ E -> E+T # T
-@ T -> T*F # F
+@ E -> E+T # E-T # T
+@ T -> T*F # T/F # F
 @ F -> (E) # num

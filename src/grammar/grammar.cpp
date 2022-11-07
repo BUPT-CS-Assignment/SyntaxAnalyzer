@@ -169,93 +169,92 @@ bool Grammar::findFollow(std::string N, std::string c)
 
 std::set<std::string> Grammar::findFirst(std::vector<Symbol> to)
 {
-    std::set<std::string> first;
-    if(to.size() == 0)
+    std::set<std::string> first;  // 定义容器
+    if(to.size() == 0)            // 传参检测
         return first;
-    if(to.size() == 1 && to[0].attr() == Symbol::Type::EPSILON)
+    if(to.size() == 1 && to[0].attr() == Symbol::Type::EPSILON) // 起始空串检测
     {
         first.insert(EPSILON_STR);
         return first;
     }
-    bool epsilon_flag = true;
-    for(auto it : to)
+    bool epsilon_flag = true;   // 空串记号
+    for(auto ele:to)
     {
-        /* terminal */
-        if(it.attr() != Symbol::Type::NOT_TERMINAL)
+        /* 遇到终结符 */
+        if(ele.attr() != Symbol::Type::NOT_TERMINAL)
         {
-            first.insert(it.content());
-            epsilon_flag = false;
+            first.insert(ele.content());    // 将其加入FIRST
+            epsilon_flag = false;           // 最终不推出epsilon
             break;
         }
         else
         {
-            /* not terminal */
-            int pos = _findN(it.content());
-            bool has_epsilon = false;
-            for(auto ele : FIRST[pos])
+            /* 遇到非终结符 */
+            int pos = _findN(ele.content());    // 定位该非终结符下标
+            bool has_epsilon = false;           // 该非终结符是否推出epsilon
+            for(auto ele : FIRST[pos])          // 对于该非终结符的每一个FIRST集合元素
             {
                 if(ele != EPSILON_STR)
-                    first.insert(ele);
+                    first.insert(ele);          // 将其非epsilon元素插入现有容器
                 else
-                    has_epsilon = true;
+                    has_epsilon = true;         // 能推出epsilon，设置该记号
             }
-            if(!has_epsilon)
+            if(!has_epsilon)                    // 该非终结符不推出epsilon
             {
-                epsilon_flag = false;
-                break;
+                epsilon_flag = false;           // 最终不推出epsilon
+                break;                          // 停止继续遍历
             }
         }
     }
-    if(epsilon_flag)
-        first.insert(EPSILON_STR);
-    return first;
+    if(epsilon_flag)                            // 所有符号都能推出epsilon
+        first.insert(EPSILON_STR);              // 将epsilon加入现有容器
+    return first;                               // 返回计算结果
 }
 
 
 void Grammar::computeFirstTable()
 {
     FIRST.clear();
-    FIRST.resize(N.size());
+    FIRST.resize(N.size());                             // 调整为与非终结符列表的大小一致
     bool run_flag = true;
     while(run_flag)
     {
-        run_flag = false;
-        for(int i = 0; i < N.size(); i++)
+        run_flag = false;                               // 设置循环记号
+        for(int i = 0; i < N.size(); i++)               // 对于每一个非终结符
         {
-            std::string from = N[i];
-            std::set<std::string>* first = &FIRST[i];
-            /* for all production from N[i] */
-            int pre_size = first->size();
-            /* p : FROM -> a|X|Y */
-            for(auto& it : P[i].to)
-            {
-                /* it : X[bZ] */
-                bool epsilon_flag;
-                for(auto& temp : it.elements)
-                {
-                    /* temp : Z */
-                    /* meet not_teminal */
-                    if(temp.attr() != Symbol::Type::NOT_TERMINAL)
+            std::set<std::string>* first = &FIRST[i];   // 通过指针记录
+            int pre_size = first->size();               // 记录原大小
+            /* p : FROM -> a|bX|cY */
+            for(auto& P_right : P[i].to)                // 对于每个非终结符的对应产生式
+            {   /* P_right : bX */
+                bool epsilon_flag;                      // 标记是否最终推出epsilon
+                for(auto& ele : P_right.elements)       // 对于每个产生式右部的元素
+                {   /* ele : X */
+                    if(ele.attr() != Symbol::Type::NOT_TERMINAL)    // 是非终结符
                     {
-                        first->insert(temp.content());
+                        first->insert(ele.content());               // 将其加入FIRST, 停止向下遍历
                         break;
                     }
                     epsilon_flag = false;
-                    std::set<std::string>* set_temp = &FIRST[_findN(temp.content())];
-                    /* not include epsilon */
-                    for(auto eles : (*set_temp))
-                        if(eles != EPSILON_STR)
+                    // 是非终结符，获取其FIRST集合
+                    int loc = _findN(ele.content());
+                    LOG_INFO(ele.content() << " " << loc);
+                    if(loc == -1)
+                        EXIT_ERROR("program error.")
+                    std::set<std::string>* set_ele = &FIRST[loc];
+                    for(auto& eles : (*set_ele))
+                        if(eles != EPSILON_STR)         // 该非终结符的FIRST不含epsilon
                             first->insert(eles);
                         else
                             epsilon_flag = true;
-                    if(!epsilon_flag)
+                    if(!epsilon_flag)                   // 如果不包含epsilon, 停止向下遍历
                         break;
                 }
-                if(epsilon_flag)
-                    first->insert(EPSILON_STR);
+                if(epsilon_flag)                        // 所有的产生式右部都能推出epsilon
+                    first->insert(EPSILON_STR);         // 将epsilon加入该非终结符的FIRST集
             }
-            if(first->size() > pre_size)   // stop test
-                run_flag = true;
+            if(first->size() > pre_size)                // FIRST集大小检测
+                run_flag = true;                        // 如果某个FIRST集合的大小有变化，则继续循环
         }
     }
 }
@@ -263,59 +262,53 @@ void Grammar::computeFirstTable()
 void Grammar::computeFollowTable()
 {
     FOLLOW.clear();
-    FOLLOW.resize(N.size());
-    FOLLOW[_findN(start)].insert(ENDING_STR);
-
-    bool run_flag = true;
+    FOLLOW.resize(N.size());                        // FOLLOW表大小调整为非终结符列表的大小
+    FOLLOW[_findN(start)].insert(ENDING_STR);       // 将$插入文法开始符号的FOLLOW集合
+    bool run_flag = true;                           // 循环记号
     while(run_flag)
     {
-        run_flag = false;
-        for(int i = 0; i < FOLLOW.size(); i++)
+        run_flag = false;   
+        for(int i = 0; i < FOLLOW.size(); i++)      // 对于每个非终结符, 记为A
         {
-            std::string from = N[i];
-            std::set<std::string>* follow = &FOLLOW[i];
-            /* for all production from N[i] */
-            for(auto& it : P[i].to)
+            std::set<std::string>* follow = &FOLLOW[i]; // 指针记录
+            for(auto& P_right : P[i].to)                // 对A的产生式的所有右部
             {
-                std::vector<Symbol> ele = it.elements;
-                for(int j = 0; j < ele.size(); j++)
+                std::vector<Symbol> ele = P_right.elements;
+                for(int j = 0; j < ele.size(); j++)     // 对每个产生式的所有符号遍历
                 {
-                    /* terminal symbol, skeep */
-                    if(ele[j].attr() != Symbol::Type::NOT_TERMINAL)
+                    if(ele[j].attr() != Symbol::Type::NOT_TERMINAL)     // 遇到非终结符, 跳过
                         continue;
-
-                    /* not terminal, compute follow for it */
-                    int pos = _findN(ele[j].content());
-                    int pre_size = FOLLOW[pos].size();
-
-                    bool end_flag = true;
-                    for(int k = j + 1; k < ele.size(); k++)
+                    /* 遇到非终结符, 计算该终结符对应的FOLLOW, 记为X */
+                    int pos = _findN(ele[j].content());         // 定位该终结符X
+                    int pre_size = FOLLOW[pos].size();          // 记录初始大小
+                    bool end_flag = true;                       // 记录是否X后部符号串能推出epsilon
+                    for(int k = j + 1; k < ele.size(); k++)     // 对X后的每个符号
                     {
-                        if(ele[k].attr() != Symbol::Type::NOT_TERMINAL)
+                        if(ele[k].attr() != Symbol::Type::NOT_TERMINAL) // 遇到终结符
                         {
-                            FOLLOW[pos].insert(ele[k].content());
-                            end_flag = false;
+                            FOLLOW[pos].insert(ele[k].content());       // 将其加入该非终结符X的FOLLOW集
+                            end_flag = false;                           // X后部的符号串不推出epsilon
                             break;
                         }
                         bool epsilon_flag = false;
-                        std::set<std::string> first_temp = findFirst(ele[k].content());
+                        /* 遇到非终结符, 记为Y */
+                        std::set<std::string> first_temp = findFirst(ele[k].content()); // 找到Y的FIRST集合
                         for(auto& it_str : first_temp)
                         {
-                            if(it_str == EPSILON_STR)
+                            if(it_str == EPSILON_STR)   // Y能推出epsilon
                                 epsilon_flag = true;
                             else
-                                FOLLOW[pos].insert(it_str);
+                                FOLLOW[pos].insert(it_str);     // 将非EPSILON元素加入非终结符X的FOLLOW集
                         }
-                        if(!epsilon_flag)
+                        if(!epsilon_flag)           // 如果Y不能推出epsilon
                         {
-                            end_flag = false;
-                            break;
+                            end_flag = false;       // X后部的符号串不推出epsilon
+                            break;                  // 停止向下遍历
                         }
                     }
-                    if(end_flag)
-                        FOLLOW[pos].insert(follow->begin(), follow->end());
-
-                    if(FOLLOW[pos].size() > pre_size)
+                    if(end_flag)                    // X后部的符号串能推出epsilon
+                        FOLLOW[pos].insert(follow->begin(), follow->end()); // 将A的FOLLOW集合加入X的FOLLOW集
+                    if(FOLLOW[pos].size() > pre_size)   // 如果X的FOLLOW集大小有更新，则进行新一轮循环
                         run_flag = true;
                 }
             }
@@ -327,16 +320,16 @@ void Grammar::computeFollowTable()
 void Grammar::eliminateLeftRecursion()
 {
     bool run_flag = true;
-    while(run_flag)
+    while(run_flag) // 循环检测直接左递归, 直到所有产生式都不存在直接左递归
     {
-        run_flag = false;
+        run_flag = false;   
         for(auto it = P.begin(); it != P.end(); it++)
         {
-            if((*it).existLeftRecursion())
+            if((*it).existLeftRecursion())  // 如果存在左递归
             {
-                Production p = (*it).eliminateLeftRecursion();
-                insert(p);
-                run_flag = true;
+                Production p = (*it).eliminateLeftRecursion();  // 修改原产生式
+                insert(p);      //插入消除该直接左递归后的新产生式
+                run_flag = true;    // 设置循环标志, 继续检测
                 break;
             }
 
@@ -357,7 +350,7 @@ void Grammar::extractLeftCommonFactor()
             run_flag = true;
             std::string from = P[i].from;
             for(auto& it:lefts){
-                //for all common factors
+                // for all common factors
                 from += "`";
                 Production p(from);
                 Symbol s(from,Symbol::Type::NOT_TERMINAL);
@@ -506,6 +499,23 @@ void Grammar::runLR1()
         sc.input(input);
         std::vector<Symbol> stream = sc.tokenStream();
         _mode_lr1->analyze(stream);
+    }
+    std::cout << "terminated." << std::endl;
+}
+
+void Grammar::runArith(){
+    _mode_arith = new Arith();
+    std::string input;
+    while(true)
+    {
+        std::cout << "Arith String > ";
+        std::getline(std::cin, input);
+        if(input == ".exit" || input == ".quit")
+            break;
+        std::cout << BOLDBLUE << "[Arith Analyzation]" << RESET << std::endl;
+        _sc.input(input);
+        std::vector<Symbol> stream = _sc.tokenStream();
+        _mode_arith->analyze(stream);
     }
     std::cout << "terminated." << std::endl;
 }
